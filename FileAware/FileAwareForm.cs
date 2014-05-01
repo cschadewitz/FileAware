@@ -18,17 +18,13 @@ using System.IO;
 using System.Security.Permissions;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using System.Threading;
 
 namespace FileAware
 {
     public partial class FormFileAware : Form
     {
-        private static SQLiteConnection dbConnection;
-        private static SQLiteCommand insertCommand;
-        private static SQLiteCommand createCommand;
-        private static DataSet currentDataSet;
-        private static SQLiteDataAdapter dbDataAdapter;
-        //private static string currentTable;
+       
         private static StreamWriter logWriter;
         private static FileStream logStream;
 
@@ -40,37 +36,16 @@ namespace FileAware
             InitializeComponent();
             this.Icon = Resources.Gakuseisean_Aire_Search_Folder;
             notifyIconFileAware.Icon = Resources.Gakuseisean_Aire_Search_Folder;
-            //dbConnection.ConnectionString = "DataSource = ./FileAwareLog.db, New=True";
             logStream = new FileStream(dbFileName, FileMode.Append);
             logWriter = new StreamWriter(logStream);
-            //OpenDataBase();    
+           
 
         }
-        //Not used
-        private void OpenDataBase()
-        {
-            try
-            {
-                dbConnection = new SQLiteConnection("Data Source=" + dbFileName + ";New=True;Version=3;");
-                dbConnection.Open();
-                insertCommand = dbConnection.CreateCommand();
-                createCommand = dbConnection.CreateCommand();
-                currentDataSet = new DataSet();
-                dbDataAdapter = new SQLiteDataAdapter();
-            }
-            catch(SQLiteException exp)
-            {
-                textBoxPath.Text = "ERROR: " + exp.Message;
-            }
-        }
-        //Not used
-        private void CloseDataBase()
-        {
-            dbConnection.Close();
-        }
+       
         //Opens folder browser to choose a path
         private void buttonFolderBrowser_Click(object sender, EventArgs e)
         {
+            
             folderBrowserDialogFileAware.ShowDialog();
             textBoxPath.Text = folderBrowserDialogFileAware.SelectedPath;
             chosenFlag = true;
@@ -90,8 +65,9 @@ namespace FileAware
 
                 try
                 {
-                    SQLiteCommandBuilder sqlBuilder = new SQLiteCommandBuilder(dbDataAdapter);
+                    
                     directoryUri = new Uri(path);
+                    fileSystemWatcherFileAware.Path = directoryUri.AbsolutePath;
                     //currentTable = "D" + DateTime.Now.ToFileTimeUtc().ToString();
                     //createCommand.CommandText = "CREATE TABLE " + currentTable + " (id integer primary key, time varchar(50), type varchar(10), filename varchar(100), path varchar(1000));";
 
@@ -102,7 +78,7 @@ namespace FileAware
                     ////dbDataAdapter.SelectCommand.
                     //dbDataAdapter.Fill(currentDataSet);
                 }
-                catch (UriFormatException exp)
+                catch (Exception exp)
                 {
                     if (FormWindowState.Minimized == this.WindowState)
                     {
@@ -117,7 +93,7 @@ namespace FileAware
                 //    return;
                 //}
                 logWriter.WriteLineAsync("Log: " + directoryUri.AbsolutePath + "\nStart Date: " + DateTime.Now.ToString() + "\n");
-                fileSystemWatcherFileAware.Path = directoryUri.AbsolutePath;
+                
                 fileSystemWatcherFileAware.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.Size;
                 
 
